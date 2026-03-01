@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIGEPA Prototipo</title>
+  <style>
+    :root {
+      --bg: #f3f6f9;
+      --panel: #ffffff;
+      --line: #d5dde6;
+      --text: #1d2a36;
+      --muted: #5e7285;
+      --primary: #0b4f7a;
+      --primary-2: #1f6e9f;
+      --danger: #b42318;
+      --warn: #b54708;
+      --ok: #067647;
+      --alert: #f59e0b;
+      --radius: 10px;
+      --shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      color: #fff;
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .banner h1 {
+      font-size: 1rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    .clock { font-weight: 600; }
+    .toolbar {
+      padding: 10px 16px;
+      background: #e8eef4;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button, select, input, textarea {
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--text);
+    }
+    button {
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    button.secondary { background: #344054; }
+    button.warn { background: var(--warn); }
+    button.danger { background: var(--danger); }
+    button.ghost {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+    main { padding: 12px; max-width: 1400px; margin: 0 auto; }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .nav button.active { background: var(--ok); }
+    .section { display: none; }
+    .section.active { display: block; }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .card h3 { margin-top: 0; font-size: 1rem; }
+    .stat { font-size: 1.6rem; font-weight: 700; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(220px, 1fr));
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .col {
+      background: #edf2f7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      min-height: 240px;
+    }
+    .col h4 { margin: 0 0 8px; font-size: .9rem; }
+    .sample-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: .86rem;
+    }
+    .sample-card strong { display: block; }
+    form .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    label { font-size: .85rem; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+    .preview {
+      max-width: 200px;
+      max-height: 140px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: none;
+    }
+    .table-wrap {
+      max-height: 440px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; font-size: .9rem; }
+    th { position: sticky; top: 0; background: #f8fafc; }
+    .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .timeline { max-height: 340px; overflow: auto; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+    .event { border-left: 3px solid var(--primary); padding: 4px 8px; margin-bottom: 8px; background: #f8fbff; }
+    .badge { display: inline-block; border-radius: 12px; padding: 2px 8px; font-size: .78rem; color: #fff; }
+    .urgente { background: var(--danger); }
+    .rutina { background: #344054; }
+    .status-chip { font-size: .8rem; padding: 2px 8px; border-radius: 10px; color: #fff; }
+    .red { background: #b42318; }
+    .orange { background: #b54708; }
+    .yellow { background: #b6920a; }
+    .green { background: #067647; }
+    @media (max-width: 900px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1>SIGEPA — Prototipo académico (No diagnóstico. Solo trazabilidad y gestión)</h1>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="warn" id="btnResetDemo">Reiniciar demo</button>
+    <button class="danger" id="btnHardReset">Hard reset</button>
+  </div>
+
+  <main>
+    <div class="nav" id="nav"></div>
+
+    <section class="section" id="sec-dashboard"></section>
+    <section class="section" id="sec-workflow"></section>
+    <section class="section" id="sec-registrar"></section>
+    <section class="section" id="sec-directorio"></section>
+    <section class="section" id="sec-detalle"></section>
+    <section class="section" id="sec-almacenamiento"></section>
+  </main>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'SIGEPA_DATA';
+  const VERSION_KEY = 'SIGEPA_VERSION';
+  const CURRENT_VERSION = '1.0.0';
+
+  const stages = [
+    'Recepción de Muestras',
+    'Registro de Muestras',
+    'Procesamiento de Tejidos',
+    'Inclusión en Parafina',
+    'Corte de Bloques de Parafina',
+    'Tinción de Cortes',
+    'Montaje de Láminas',
+    'Análisis Histopatológico',
+    'Reporte de Resultados',
+    'Almacenamiento de Muestras y Láminas'
+  ];
+
+  const sections = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'workflow', label: 'Workflow' },
+    { id: 'registrar', label: 'Registrar muestra' },
+    { id: 'directorio', label: 'Directorio' },
+    { id: 'detalle', label: 'Detalle' },
+    { id: 'almacenamiento', label: 'Almacenamiento' }
+  ];
+
+  const tissueLetterMap = {
+    'Mama': 'A',
+    'Gastro': 'B',
+    'Piel': 'C',
+    'Gineco': 'D',
+    'Pulmón': 'E',
+    'Uro': 'F',
+    'Otro': 'Z'
+  };
+
+  const technicians = ['Ana Ríos', 'Bruno Pérez', 'Carla Soto', 'Diego Lara', 'Elena Cruz', 'Fabio Núñez'];
+  const pathologists = ['Dra. Silva', 'Dr. Torres', 'Dra. Méndez', 'Dr. Ibarra'];
+  const storageStaff = ['Archivo Central', 'Patricia Vega', 'Luis Cornejo'];
+
+  let state = loadState();
+  let currentDetailId = null;
+
+  function uid() {
+    return `S-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function nowISO() {
+    return new Date().toISOString();
+  }
+
+  function fmtDateTime(iso) {
+    return new Date(iso).toLocaleString('es-CL', { hour12: false });
+  }
+
+  function formatDateInput(isoOrDate) {
+    const d = new Date(isoOrDate);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function ddmmaa(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}${mm}${yy}`;
+  }
+
+  function initials4(name) {
+    const clean = (name || '').replace(/\s+/g, '').toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/g, '');
+    return (clean.slice(0, 4) + 'XXXX').slice(0, 4);
+  }
+
+  function addYears(dateStr, years) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setFullYear(d.getFullYear() + years);
+    return formatDateInput(d);
+  }
+
+  function stageByIndex(i) { return stages[Math.max(0, Math.min(i, stages.length - 1))]; }
+
+  function getResponsiblePool(stageIndex) {
+    if (stageIndex <= 6) return technicians;
+    if (stageIndex <= 8) return pathologists;
+    return [...technicians, ...storageStaff];
+  }
+
+  function getSemaphore(sample) {
+    if (sample.delivered) return { cls: 'green', label: 'entregado' };
+    const today = new Date(formatDateInput(new Date()));
+    const exp = new Date(sample.expirationDate + 'T00:00:00');
+    const diffDays = Math.floor((exp - today) / 86400000);
+    if (exp <= today) return { cls: 'red', label: 'vencido' };
+    if (diffDays <= 90) return { cls: 'orange', label: `≤ 90 días (${diffDays})` };
+    return { cls: 'yellow', label: 'en regla almacenado' };
+  }
+
+  function createTrace(type, fromStage, toStage, assignee, note) {
+    return { id: uid(), ts: nowISO(), type, fromStage: fromStage || '', toStage: toStage || '', assignee: assignee || '', note: note || '' };
+  }
+
+  function generateCode({ procedure, tissue, entryDate, patientName }) {
+    const dateCode = ddmmaa(entryDate);
+    const key = `${procedure}-${dateCode}`;
+    if (!state.folios[key]) state.folios[key] = 0;
+    state.folios[key] += 1;
+    const folio = String(state.folios[key]).padStart(3, '0');
+    const tissueLetter = tissueLetterMap[tissue] || 'Z';
+    return `${procedure}-${tissueLetter}-${dateCode}-${initials4(patientName)}-${folio}`;
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return bootstrap();
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.samples)) return bootstrap();
+      if (!parsed.folios) parsed.folios = {};
+      return parsed;
+    } catch {
+      return bootstrap();
+    }
+  }
+
+  function hardResetSIGEPA() {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('SIGEPA_')) localStorage.removeItem(k);
+    });
+  }
+
+  function bootstrap() {
+    const data = { samples: [], folios: {} };
+    state = data;
+    seedSamples(30);
+    return data;
+  }
+
+  function seedSamples(n) {
+    const names = ['Santiago Mora', 'Valentina Ruiz', 'Mateo Díaz', 'Isidora Campos', 'Tomás Salas', 'Josefa León', 'Benjamín Fuentes', 'Antonia Rivas', 'Vicente Araya', 'Catalina Pinto', 'Martín Figueroa', 'Amanda Cordero', 'Ignacio Paredes', 'Florencia Espinoza', 'Joaquín Vidal', 'Trinidad Molina', 'Lucas Herrera', 'Maite Contreras', 'Cristóbal Navarro', 'Emilia Bravo', 'Agustín Vargas', 'Renata Carrasco', 'Simón Reyes', 'Daniela Acuña', 'Nicolás Sepúlveda', 'Julieta Olivares', 'Gaspar Peña', 'Martina Farías', 'Alonso Rojas', 'Sofía Escobar'];
+    const tissues = Object.keys(tissueLetterMap);
+
+    for (let i = 0; i < n; i++) {
+      const procedure = i % 2 === 0 ? 'A' : 'B';
+      const priority = i % 5 === 0 ? 'Urgente' : 'Rutina';
+      const patientName = names[i % names.length];
+      const tissue = tissues[i % tissues.length];
+      const daysAgo = 30 + i * 13;
+      const entry = new Date();
+      entry.setDate(entry.getDate() - daysAgo);
+      const entryDate = formatDateInput(entry);
+
+      const stageIndex = (i % 10);
+      const stage = stageByIndex(stageIndex);
+      const pool = getResponsiblePool(stageIndex);
+      const assignee = pool[i % pool.length];
+
+      const sample = {
+        id: uid(),
+        code: generateCode({ procedure, tissue, entryDate, patientName }),
+        procedure,
+        priority,
+        patientName,
+        tissue,
+        entryDate,
+        expirationDate: addYears(entryDate, 5),
+        stageIndex,
+        currentStage: stage,
+        assignee,
+        imageData: '',
+        delivered: false,
+        finalDisposition: false,
+        history: []
+      };
+
+      sample.history.push(createTrace('CREATED', '', 'Recepción de Muestras', assignee, 'Ingreso inicial'));
+      if (stageIndex > 0) {
+        for (let s = 1; s <= Math.min(stageIndex, 2); s++) {
+          sample.history.push(createTrace('STAGE_CHANGE', stageByIndex(s - 1), stageByIndex(s), getResponsiblePool(s)[0], 'Avance de ejemplo'));
+        }
+      }
+      if (sample.history.length < 3) sample.history.push(createTrace('ASSIGNEE_CHANGE', stage, stage, assignee, 'Ajuste de responsable'));
+
+      if (stageIndex === 9 && i % 9 === 0) {
+        sample.delivered = true;
+        sample.history.push(createTrace('DELIVERED', stage, stage, assignee, 'Entregada a solicitante'));
+      }
+      if (stageIndex === 9 && i % 11 === 0) {
+        sample.finalDisposition = true;
+        sample.history.push(createTrace('FINAL_DISPOSITION', stage, stage, assignee, 'Disposición final aplicada'));
+      }
+      dataPush(sample);
+    }
+
+    const atStorage = state.samples.filter(s => s.stageIndex === 9);
+    atStorage.slice(0, 3).forEach(s => { if (!s.delivered) { s.delivered = true; s.history.push(createTrace('DELIVERED', s.currentStage, s.currentStage, s.assignee, 'Entregada (demo)')); } });
+    atStorage.slice(3, 6).forEach(s => { if (!s.finalDisposition) { s.finalDisposition = true; s.history.push(createTrace('FINAL_DISPOSITION', s.currentStage, s.currentStage, s.assignee, 'Disposición final (demo)')); } });
+  }
+
+  function dataPush(sample) {
+    state.samples.push(sample);
+  }
+
+  function renderNav() {
+    const nav = document.getElementById('nav');
+    nav.innerHTML = '';
+    sections.forEach((s, idx) => {
+      const b = document.createElement('button');
+      b.textContent = s.label;
+      b.className = idx === 0 ? 'active' : '';
+      b.dataset.sec = s.id;
+      b.addEventListener('click', () => showSection(s.id));
+      nav.appendChild(b);
+    });
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.querySelectorAll('#nav button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`sec-${id}`).classList.add('active');
+    const b = document.querySelector(`#nav button[data-sec="${id}"]`);
+    if (b) b.classList.add('active');
+    if (id === 'detalle' && !currentDetailId && state.samples[0]) openDetail(state.samples[0].id, false);
+  }
+
+  function renderDashboard() {
+    const sec = document.getElementById('sec-dashboard');
+    const urgent = state.samples.filter(s => s.priority === 'Urgente').length;
+    const tech = state.samples.filter(s => s.stageIndex <= 6).length;
+    const anal = state.samples.filter(s => s.stageIndex >= 7 && s.stageIndex <= 8).length;
+    const stor = state.samples.filter(s => s.stageIndex === 9).length;
+    const alerts = state.samples.filter(s => s.stageIndex === 9 && (getSemaphore(s).cls === 'red' || getSemaphore(s).cls === 'orange'));
+
+    sec.innerHTML = `
+      <div class="grid">
+        <div class="card"><h3>En etapas técnicas (1-7)</h3><div class="stat">${tech}</div></div>
+        <div class="card"><h3>En análisis (8-9)</h3><div class="stat">${anal}</div></div>
+        <div class="card"><h3>En almacenamiento (10)</h3><div class="stat">${stor}</div></div>
+        <div class="card"><h3>Urgentes</h3><div class="stat">${urgent}</div></div>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3>Alertas de vencimiento (solo almacenamiento)</h3>
+        ${alerts.length ? `<ul>${alerts.map(a => `<li>${a.code} — ${a.patientName} — ${a.expirationDate} (${getSemaphore(a).label})</li>`).join('')}</ul>` : '<p class="muted">Sin alertas.</p>'}
+      </div>
+    `;
+  }
+
+  function renderWorkflow() {
+    const sec = document.getElementById('sec-workflow');
+    const cols = stages.map((stg, idx) => {
+      const cards = state.samples.filter(s => s.stageIndex === idx).map(s => `
+        <div class="sample-card">
+          <strong>${s.code}</strong>
+          <div>${s.patientName}</div>
+          <div>Tejido: ${s.tissue}</div>
+          <div>Prioridad: <span class="badge ${s.priority === 'Urgente' ? 'urgente' : 'rutina'}">${s.priority}</span></div>
+          <div>Resp: ${s.assignee}</div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="ghost" data-detail-id="${s.id}">Ver ficha</button>
+            <button data-advance-id="${s.id}" ${s.stageIndex >= 9 ? 'disabled' : ''}>Avanzar fase</button>
+          </div>
+        </div>
+      `).join('') || '<div class="muted">Sin muestras</div>';
+      return `<div class="col"><h4>${idx + 1}. ${stg}</h4>${cards}</div>`;
+    }).join('');
+
+    sec.innerHTML = `<div class="workflow">${cols}</div>`;
+    sec.querySelectorAll('[data-advance-id]').forEach(btn => btn.addEventListener('click', () => advanceStage(btn.dataset.advanceId)));
+    sec.querySelectorAll('[data-detail-id]').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.detailId)));
+  }
+
+  function renderRegistrar() {
+    const sec = document.getElementById('sec-registrar');
+    sec.innerHTML = `
+      <div class="card">
+        <h3>Registrar muestra</h3>
+        <form id="formRegister">
+          <div class="row">
+            <label>Procedimiento
+              <select name="procedure" required>
+                <option value="">Seleccione</option>
+                <option value="A">A = Biopsia</option>
+                <option value="B">B = Pieza quirúrgica</option>
+              </select>
+            </label>
+            <label>Prioridad
+              <select name="priority" required>
+                <option>Rutina</option>
+                <option>Urgente</option>
+              </select>
+            </label>
+            <label>Nombre del paciente
+              <input name="patientName" required minlength="3" />
+            </label>
+            <label>Tipo de tejido
+              <select name="tissue" required>
+                ${Object.keys(tissueLetterMap).map(t => `<option>${t}</option>`).join('')}
+              </select>
+            </label>
+            <label>Fecha ingreso
+              <input type="date" name="entryDate" required value="${formatDateInput(new Date())}" />
+            </label>
+            <label>Responsable inicial (técnico)
+              <select name="assignee">${technicians.map(t => `<option>${t}</option>`).join('')}</select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Adjuntar foto
+              <input type="file" name="photo" accept="image/*" />
+            </label>
+            <div>
+              <img id="photoPreview" class="preview" alt="preview" />
+            </div>
+          </div>
+          <button type="submit">Guardar muestra</button>
+        </form>
+      </div>
+    `;
+
+    const form = document.getElementById('formRegister');
+    const fileInput = form.photo;
+    const preview = document.getElementById('photoPreview');
+    let imageData = '';
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        imageData = e.target.result;
+        preview.src = imageData;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const procedure = fd.get('procedure');
+      const priority = fd.get('priority');
+      const patientName = fd.get('patientName').toString().trim();
+      const tissue = fd.get('tissue');
+      const entryDate = fd.get('entryDate');
+      const assignee = fd.get('assignee');
+      if (!procedure || !patientName || !entryDate) return;
+
+      const sample = {
+        id: uid(),
+        code: generateCode({ procedure, tissue, entryDate, patientName }),
+        procedure,
+        priority,
+        patientName,
+        tissue,
+        entryDate,
+        expirationDate: addYears(entryDate, 5),
+        stageIndex: 0,
+        currentStage: stageByIndex(0),
+        assignee,
+        imageData: imageData || '',
+        delivered: false,
+        finalDisposition: false,
+        history: [createTrace('CREATED', '', stageByIndex(0), assignee, 'Registro inicial')]
+      };
+
+      dataPush(sample);
+      saveState();
+      renderAll();
+      openDetail(sample.id);
+    });
+  }
+
+  function renderDirectorio() {
+    const sec = document.getElementById('sec-directorio');
+    sec.innerHTML = `
+      <div class="card">
+        <h3>Directorio de muestras</h3>
+        <div class="row" style="margin-bottom:8px;">
+          <label>Buscar
+            <input id="dirSearch" placeholder="nombre/código/tejido/etapa" />
+          </label>
+          <label>Etapa
+            <select id="dirStage"><option value="">Todas</option>${stages.map((s,i)=>`<option value="${i}">${i+1}. ${s}</option>`).join('')}</select>
+          </label>
+          <label>Prioridad
+            <select id="dirPriority"><option value="">Todas</option><option>Rutina</option><option>Urgente</option></select>
+          </label>
+          <label>Tejido
+            <select id="dirTissue"><option value="">Todos</option>${Object.keys(tissueLetterMap).map(t=>`<option>${t}</option>`).join('')}</select>
+          </label>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Código</th><th>Paciente</th><th>Tejido</th><th>Etapa</th><th>Prioridad</th><th>Responsable</th><th>Acción</th></tr></thead>
+          <tbody id="dirBody"></tbody>
+        </table></div>
+      </div>
+    `;
+
+    const search = sec.querySelector('#dirSearch');
+    const fStage = sec.querySelector('#dirStage');
+    const fPri = sec.querySelector('#dirPriority');
+    const fTissue = sec.querySelector('#dirTissue');
+    const body = sec.querySelector('#dirBody');
+
+    const drawRows = () => {
+      const q = search.value.toLowerCase().trim();
+      const stageVal = fStage.value;
+      const pri = fPri.value;
+      const tis = fTissue.value;
+
+      const rows = state.samples.filter(s => {
+        const matchQ = !q || [s.patientName, s.code, s.tissue, s.currentStage].join(' ').toLowerCase().includes(q);
+        const matchStage = !stageVal || String(s.stageIndex) === stageVal;
+        const matchPri = !pri || s.priority === pri;
+        const matchTis = !tis || s.tissue === tis;
+        return matchQ && matchStage && matchPri && matchTis;
+      });
+
+      body.innerHTML = rows.map(s => `
+        <tr>
+          <td>${s.code}</td><td>${s.patientName}</td><td>${s.tissue}</td><td>${s.currentStage}</td><td>${s.priority}</td><td>${s.assignee}</td>
+          <td><button class="ghost" data-id="${s.id}">Ver ficha</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="muted">Sin resultados</td></tr>';
+
+      body.querySelectorAll('button[data-id]').forEach(btn => {
+        btn.addEventListener('click', () => openDetail(btn.dataset.id));
+      });
+    };
+
+    [search, fStage, fPri, fTissue].forEach(el => el.addEventListener('input', drawRows));
+    drawRows();
+  }
+
+  function openDetail(id, goSection = true) {
+    const sample = state.samples.find(s => s.id === id);
+    if (!sample) return;
+    currentDetailId = id;
+    renderDetail();
+    if (goSection) showSection('detalle');
+  }
+
+  function renderDetail() {
+    const sec = document.getElementById('sec-detalle');
+    const s = state.samples.find(x => x.id === currentDetailId);
+    if (!s) {
+      sec.innerHTML = '<div class="card"><p class="muted">Seleccione una muestra desde Directorio o Workflow.</p></div>';
+      return;
+    }
+
+    const assignees = getResponsiblePool(s.stageIndex);
+    sec.innerHTML = `
+      <div class="detail-grid">
+        <div class="card">
+          <h3>Ficha completa</h3>
+          <p><strong>Código:</strong> ${s.code}</p>
+          <p><strong>Paciente:</strong> <input id="editPatient" value="${s.patientName}" /></p>
+          <p><strong>Procedimiento:</strong> ${s.procedure}</p>
+          <p><strong>Prioridad:</strong> <select id="editPriority"><option ${s.priority==='Rutina'?'selected':''}>Rutina</option><option ${s.priority==='Urgente'?'selected':''}>Urgente</option></select></p>
+          <p><strong>Tejido:</strong> <select id="editTissue">${Object.keys(tissueLetterMap).map(t => `<option ${s.tissue===t?'selected':''}>${t}</option>`).join('')}</select></p>
+          <p><strong>Fecha ingreso:</strong> <input id="editEntryDate" type="date" value="${s.entryDate}" /></p>
+          <p><strong>Vencimiento:</strong> ${s.expirationDate}</p>
+          <p><strong>Etapa actual:</strong> ${s.currentStage}</p>
+          <p><strong>Responsable actual:</strong> ${s.assignee}</p>
+          ${s.imageData ? `<img class="preview" style="display:block;max-width:260px;" src="${s.imageData}" alt="foto muestra" />` : '<p class="muted">Sin foto adjunta.</p>'}
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button id="btnAdvance" ${s.stageIndex>=9?'disabled':''}>Avanzar fase</button>
+            <select id="newAssignee">${assignees.map(a=>`<option ${a===s.assignee?'selected':''}>${a}</option>`).join('')}</select>
+            <button class="secondary" id="btnAssignee">Cambiar responsable</button>
+            <button class="ghost" id="btnEdit">Guardar edición básica</button>
+            <button class="warn" id="btnDelivered">Marcar Entregada</button>
+            <button class="danger" id="btnDisposition">Marcar Disposición final</button>
+          </div>
+
+          <div class="timeline" id="timeline"></div>
+        </div>
+        <div class="card">
+          <h3>Referencia de etapas</h3>
+          <ol>${stages.map(st => `<li>${st}</li>`).join('')}</ol>
+        </div>
+      </div>
+    `;
+
+    const tl = sec.querySelector('#timeline');
+    tl.innerHTML = s.history.slice().reverse().map(ev => `
+      <div class="event">
+        <div><strong>${fmtDateTime(ev.ts)}</strong> — ${ev.type}</div>
+        <div class="muted">from: ${ev.fromStage || '-'} → to: ${ev.toStage || '-'}</div>
+        <div class="muted">responsable: ${ev.assignee || '-'}</div>
+        <div>${ev.note || ''}</div>
+      </div>
+    `).join('');
+
+    sec.querySelector('#btnAdvance').addEventListener('click', () => advanceStage(s.id, true));
+    sec.querySelector('#btnAssignee').addEventListener('click', () => {
+      const newA = sec.querySelector('#newAssignee').value;
+      if (newA && newA !== s.assignee) {
+        const prev = s.assignee;
+        s.assignee = newA;
+        s.history.push(createTrace('ASSIGNEE_CHANGE', s.currentStage, s.currentStage, newA, `Cambio de responsable: ${prev} → ${newA}`));
+        persistAndRefresh(true);
+      }
+    });
+    sec.querySelector('#btnEdit').addEventListener('click', () => {
+      const newName = sec.querySelector('#editPatient').value.trim();
+      const newPriority = sec.querySelector('#editPriority').value;
+      const newTissue = sec.querySelector('#editTissue').value;
+      const newEntry = sec.querySelector('#editEntryDate').value;
+      if (!newName || !newEntry) return;
+      s.patientName = newName;
+      s.priority = newPriority;
+      s.tissue = newTissue;
+      s.entryDate = newEntry;
+      s.expirationDate = addYears(newEntry, 5);
+      s.history.push(createTrace('EDIT', s.currentStage, s.currentStage, s.assignee, 'Edición de campos básicos'));
+      persistAndRefresh(true);
+    });
+    sec.querySelector('#btnDelivered').addEventListener('click', () => {
+      s.delivered = true;
+      s.history.push(createTrace('DELIVERED', s.currentStage, s.currentStage, s.assignee, 'Marcada como entregada'));
+      persistAndRefresh(true);
+    });
+    sec.querySelector('#btnDisposition').addEventListener('click', () => {
+      s.finalDisposition = true;
+      s.history.push(createTrace('FINAL_DISPOSITION', s.currentStage, s.currentStage, s.assignee, 'Marcada disposición final'));
+      persistAndRefresh(true);
+    });
+  }
+
+  function advanceStage(id, keepDetail = false) {
+    const s = state.samples.find(x => x.id === id);
+    if (!s || s.stageIndex >= stages.length - 1) return;
+    const from = s.currentStage;
+    s.stageIndex += 1;
+    s.currentStage = stageByIndex(s.stageIndex);
+    const pool = getResponsiblePool(s.stageIndex);
+    if (!pool.includes(s.assignee)) s.assignee = pool[0];
+    s.history.push(createTrace('STAGE_CHANGE', from, s.currentStage, s.assignee, 'Avance de fase'));
+    persistAndRefresh(keepDetail);
+  }
+
+  function renderAlmacenamiento() {
+    const sec = document.getElementById('sec-almacenamiento');
+    const rows = state.samples.filter(s => s.stageIndex === 9 || s.delivered || s.finalDisposition);
+    sec.innerHTML = `
+      <div class="card">
+        <h3>Almacenamiento / Resguardo</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Código</th><th>Paciente</th><th>Vencimiento</th><th>Estado</th><th>Entregada</th><th>Disposición final</th><th>Acción</th></tr></thead>
+          <tbody>
+            ${rows.map(s => {
+              const sem = getSemaphore(s);
+              return `<tr>
+                <td>${s.code}</td><td>${s.patientName}</td><td>${s.expirationDate}</td>
+                <td><span class="status-chip ${sem.cls}">${sem.label}</span></td>
+                <td>${s.delivered ? 'Sí' : 'No'}</td><td>${s.finalDisposition ? 'Sí' : 'No'}</td>
+                <td><button class="ghost" data-id="${s.id}">Ver ficha</button></td>
+              </tr>`;
+            }).join('') || '<tr><td colspan="7" class="muted">Sin registros</td></tr>'}
+          </tbody>
+        </table></div>
+      </div>
+    `;
+    sec.querySelectorAll('button[data-id]').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
+  }
+
+  function renderAll() {
+    renderDashboard();
+    renderWorkflow();
+    renderRegistrar();
+    renderDirectorio();
+    renderDetail();
+    renderAlmacenamiento();
+  }
+
+  function persistAndRefresh(keepDetail) {
+    saveState();
+    renderAll();
+    if (keepDetail && currentDetailId) openDetail(currentDetailId, false);
+  }
+
+  function tickClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleString('es-CL', { hour12: false });
+  }
+
+  function bindGlobalButtons() {
+    document.getElementById('btnResetDemo').addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(VERSION_KEY);
+      state = bootstrap();
+      saveState();
+      currentDetailId = state.samples[0]?.id || null;
+      renderAll();
+      showSection('dashboard');
+    });
+
+    document.getElementById('btnHardReset').addEventListener('click', () => {
+      hardResetSIGEPA();
+      state = bootstrap();
+      saveState();
+      currentDetailId = state.samples[0]?.id || null;
+      renderAll();
+      showSection('dashboard');
+    });
+  }
+
+  function init() {
+    saveState();
+    renderNav();
+    bindGlobalButtons();
+    currentDetailId = state.samples[0]?.id || null;
+    renderAll();
+    showSection('dashboard');
+    tickClock();
+    setInterval(tickClock, 1000);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
